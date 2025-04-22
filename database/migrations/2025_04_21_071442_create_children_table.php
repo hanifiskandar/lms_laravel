@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('children', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->nullable();
+            $table->string('nric', 12)->nullable();
+            $table->string('gender')->nullable();
+            $table->date('dob')->nullable();
+            $table->enum('marital_status', ['single', 'married', 'divorced'])->nullable();
+            $table->string('activity')->nullable();
             $table->timestamps();
         });
     }
