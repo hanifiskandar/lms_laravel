@@ -14,6 +14,13 @@ class EmergencyContactResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'user_id' => $this->user_id,
+            'name' => $this->name,
+            'relation' => $this->relation,
+            'phone_number' => $this->phone_number,
+            'user' => new UserResource($this->whenLoaded('user')),
+        ];
     }
 }

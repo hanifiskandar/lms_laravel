@@ -14,6 +14,16 @@ class ChildrenResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'user_id' =>  $this->user_id,
+            'name' => $this->name,
+            'nric' => $this->nric,
+            'gender' => $this->gender,
+            'dob' => $this->dob,
+            'marital_status' => $this->marital_status,
+            'activity' => $this->activity,
+            'user' => new UserResource($this->whenLoaded('user')),
+        ];
     }
 }

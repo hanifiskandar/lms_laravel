@@ -14,6 +14,14 @@ class LeaveLimitResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'user_id' => $this->user_id,
+            'leave_type_id' => $this->leave_type_id,
+            'year' => $this->year,
+            'limit_days' => $this->limit_days,
+            'user' => new UserResource($this->whenLoaded('user')), // Eager load user data
+            'leave_type' => new LeaveTypeResource($this->whenLoaded('leaveType')), // Eager load leave type data
+        ];
     }
 }
