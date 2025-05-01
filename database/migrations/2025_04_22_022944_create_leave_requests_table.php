@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('leave_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('leave_type_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('leave_type_id')->nullable()->onDelete('set null');
             $table->date('start_date');
             $table->date('end_date');
             $table->enum('duration', ['full_day', 'half_day'])->default('full_day');

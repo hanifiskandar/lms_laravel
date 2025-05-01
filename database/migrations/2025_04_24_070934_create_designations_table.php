@@ -13,6 +13,18 @@ return new class extends Migration
     {
         Schema::create('designations', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('level');
+            $table->integer('annual_leave')->default(0);
+            $table->integer('sick_leave')->default(0);
+            $table->integer('maternity_leave')->default(0);
+            $table->integer('paternity_leave')->default(0);
+            $table->integer('emergency_leave')->default(0);
+            $table->integer('unpaid_leave')->default(0);
+            $table->integer('compassionate_leave')->default(0);
+            $table->integer('study_leave')->default(0);
+            $table->integer('hospitalization_leave')->default(0);
+            $table->integer('marriage_leave')->default(0);
             $table->timestamps();
         });
     }
