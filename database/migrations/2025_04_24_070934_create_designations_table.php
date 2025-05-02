@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('designations', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('level');
+            $table->string('name')->unique(); // e.g., Junior Engineer
+            $table->string('type'); // e.g., Engineer
+            $table->unsignedTinyInteger('level'); // e.g., 1, 2, 3
             $table->integer('annual_leave')->default(0);
             $table->integer('sick_leave')->default(0);
             $table->integer('maternity_leave')->default(0);

@@ -18,8 +18,7 @@ return new class extends Migration
             $table->enum('marital_status', ['single', 'married', 'divorced'])->nullable()->after('dob');
             $table->string('mobile_phone')->nullable()->after('martial_status');
             $table->string('office_phone')->nullable()->after('mobile_phone');
-            $table->string('designation')->nullable()->after('office_phone');
-            $table->string('position_level')->nullable()->after('designation');
+            $table->string('designation_id')->nullable()->after('office_phone');
             $table->string('department_id')->nullable()->after('position_level');
             $table->string('address_line1')->nullable()->after('department_id');
             $table->string('address_line2')->nullable()->after('address_line1');
@@ -50,8 +49,7 @@ return new class extends Migration
                 'marital_status',
                 'mobile_phone',
                 'office_phone',
-                'designation',
-                'position_level',
+                'designation_id',
                 'department_id',
                 'address_line1',
                 'address_line2',

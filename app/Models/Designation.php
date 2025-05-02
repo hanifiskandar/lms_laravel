@@ -22,8 +22,4 @@ class Designation extends Model
         'marriage_leave',
     ];
 
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
 }
