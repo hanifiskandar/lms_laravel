@@ -17,9 +17,12 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $this->call([
+            StateSeeder::class,
             DepartmentSeeder::class,
             DesignationSeeder::class,
-            LeaveTypeSeeder::class,            
+            LeaveTypeSeeder::class,
+            UserSeeder::class,
+            LeaveLimitSeeder::class,            
         ]);
     }
 }

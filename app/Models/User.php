@@ -24,7 +24,7 @@ class User extends Authenticatable
         'password',
         'nric',
         'dob',
-        'marital_status',
+        'martial_status',
         'mobile_phone',
         'office_phone',
         'designation_id',
@@ -35,12 +35,12 @@ class User extends Authenticatable
         'city',
         'state',
         'postcode',
-        'country',
+        'start_date',
+        'end_date',
         'spouse_name',
         'spouse_nric',
         'spouse_job',
         'spouse_employer',
-        'role',
         'is_active',
     ];
 
@@ -65,6 +65,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'designation_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function leaveLimits()
