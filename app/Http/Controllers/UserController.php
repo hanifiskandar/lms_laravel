@@ -45,39 +45,39 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'nric' => 'required|string|min:12',
-            'mobile_phone' => 'required',
-            'email' => 'required|string|email|max:255|unique:users',
-            'start_date' => 'required',
-            'martial_status' => 'required',
-            'designation_id' => 'required',
-            'department_id' => 'required',
-            'username' => 'required|string|min:12',
-            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
-            'is_active' => 'nullable|boolean',
-        ]);
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'nric' => 'required|string|min:12',
+                'mobile_phone' => 'required',
+                'email' => 'required|string|email|max:255|unique:users',
+                'start_date' => 'required',
+                'martial_status' => 'required',
+                'designation_id' => 'required',
+                'department_id' => 'required',
+                'username' => 'required|string|min:12',
+                'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
+                'is_active' => 'nullable|boolean',
+            ]);
 
-        $user = User::create([
-            ...$validated,
-            'password' => Hash::make($validated['password']),
-            'is_active' => isset($validated['is_active']) ? $validated['is_active'] : false,
-        ]);
+            $user = User::create([
+                ...$validated,
+                'password' => Hash::make($validated['password']),
+                'is_active' => isset($validated['is_active']) ? $validated['is_active'] : false,
+            ]);
 
-        $user->load(['designation', 'department']);
+            $user->load(['designation', 'department']);
 
-        return new UserResource($user);
-    }
+            return new UserResource($user);
+        }
 
     /**
      * Display the specified resource.
      */
     public function show($id)
     {
-        $user = User::with('designation', 'department')->findOrFail($id);
+        $user = User::with('designation', 'department', 'emergencyContacts','familyMembers','children')->findOrFail($id);
         return new UserResource($user);
     }
 
@@ -86,28 +86,92 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $user = User::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'nric' => 'sometimes|string|min:12',
-            'mobile_phone' => 'sometimes',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'start_date' => 'sometimes',
-            'end_date' => 'sometimes',
-            'martial_status' => 'sometimes',
-            'designation_id' => 'sometimes',
-            'department_id' => 'sometimes',
-            'password' => ['sometimes', 'confirmed', Password::min(8)->letters()->numbers()],
-            'is_active' => 'nullable|boolean',
-        ]);
+        if($request->filled('page') && $request->page === 'Personal'){
+            
+            $validated = $request->validate([
+                'address_line1' => 'required',
+                'address_line2' => 'nullable|string',
+                'address_line3' => 'nullable|string',
+                'city' => 'required',
+                'state' => 'required',
+                'postcode' => 'required',
+                'office_phone' => 'nullable|string',
+                'mobile_phone' => 'required',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            ]);
 
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
+            $validatedContacts = $request->validate([
+                'emergency_contacts' => 'required|array|min:1',
+                'emergency_contacts.*.id' => 'nullable|integer|exists:emergency_contacts,id',
+                'emergency_contacts.*.name' => 'required|string',
+                'emergency_contacts.*.relation' => 'required|string',
+                'emergency_contacts.*.mobile_phone' => 'required|string',
+            ]);
+        }
+        else if($request->filled('page') && $request->page === 'Personal')
+        {
+            $validated = $request->validate([
+                'spouse_name' => 'nullable|string',
+                'spouse_nric' => 'nullable|string',
+                'spouse_job' => 'nullable|string',
+                'spouse_mobile_phone' => 'nullable|string',
+            ]);
+
+            $validatedFamily = $request->validate([
+                'family_members' => 'required|array|min:1',
+                'family_members.*.id' => 'nullable|integer|exists:family_members,id',
+                'family_members.*.name' => 'required|string',
+                'family_members.*.nric' => 'required|string',
+                'family_members.*.gender' => 'required|string',
+                'family_members.*.dob' => 'nullable|date',
+                'family_members.*.mobile_phone' => 'required|string',
+                'family_members.*.relation' => 'required|string',
+                'family_members.*.martial_status' => 'required|string',
+                'family_members.*.activity' => 'required|string',
+                'family_members.*.organization' => 'nullable|string',
+            ]);
+        }
+        else
+        {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'nric' => 'required|string|min:12',
+                'mobile_phone' => 'required',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+                'start_date' => 'required',
+                'end_date' => 'sometimes',
+                'martial_status' => 'required',
+                'designation_id' => 'required',
+                'department_id' => 'required',
+                'password' => ['sometimes', 'confirmed', Password::min(8)->letters()->numbers()],
+                'is_active' => 'nullable|boolean',
+            ]);
+
+            if (isset($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            }
+
         }
 
         $user->update($validated);
-        $user->load(['designation', 'department']);
+
+        if ($request->has('emergency_contacts')) {
+            $this->manageEmergencyContacts($user, $validatedContacts['emergency_contacts']);
+        }
+
+        if ($request->has('family_members')) {
+            $this->manageFamilyMembers($user, $validatedFamily['family_members']);
+        }
+
+        if ($request->has('children')) {
+            $this->manageChildren($user, $request->children);
+        }
+
+
+        $user->load(['designation', 'department', 'emergencyContacts','familyMembers','children']);
 
         return new UserResource($user);
     }
@@ -122,35 +186,103 @@ class UserController extends Controller
         return response()->json(null, 204);
     }
 
-    // public function exportPDF(Request $request)
-    // {
+    private function manageEmergencyContacts(User $user, array $contacts)
+    {
+        $existingIds = $user->emergencyContacts()->pluck('id')->toArray();
+        $incomingIds = collect($contacts)->pluck('id')->filter()->toArray();
 
-    //     $users = User::query()
-    //         ->with(['organization', 'department'])
-    //         ->when($request->filled('search'), function ($query) use ($request) {
-    //             $search = $request->input('search');
-    //             $query->where(function ($query2) use ($search) {
-    //                 $query2->where('name', 'like', "%{$search}%")
-    //                     ->orWhere('nric', 'like', "%{$search}%")
-    //                     ->orWhere('email', 'like', "%{$search}%");
-    //             });
-    //         })
-    //         ->when($request->filled('organization'), function ($query) use ($request) {
-    //             $query->where('organization_id', $request->input('organization'));
-    //         })
-    //         ->when($request->filled('department'), function ($query) use ($request) {
-    //             $query->where('department_id', $request->input('department'));
-    //         })
-    //         ->get();
+        // Delete contacts that were removed
+        $toDelete = array_diff($existingIds, $incomingIds);
+        $user->emergencyContacts()->whereIn('id', $toDelete)->delete();
 
-    //     $pdf = Pdf::loadView('exports.users', ['users' => $users])
-    //         ->setPaper('a4', 'landscape');
+        // Create or update contacts
+        foreach ($contacts as $contact) {
+            if (isset($contact['id'])) {
+                $user->emergencyContacts()->where('id', $contact['id'])->update([
+                    'name' => $contact['name'],
+                    'relation' => $contact['relation'],
+                    'mobile_phone' => $contact['mobile_phone'],
+                ]);
+            } else {
+                $user->emergencyContacts()->create([
+                    'name' => $contact['name'],
+                    'relation' => $contact['relation'],
+                    'mobile_phone' => $contact['mobile_phone'],
+                ]);
+            }
+        }
+    }
 
-    //     return $pdf->download('users.pdf');
-    // }
+    private function manageFamilyMembers(User $user, array $families)
+    {
+        $existingIds = $user->familyMembers()->pluck('id')->toArray();
+        $incomingIds = collect($families)->pluck('id')->filter()->toArray();
 
-    // public function exportExcel(Request $request)
-    // {
-    //     return Excel::download(new UsersExport($request), 'users.xlsx');
-    // }
+        // Delete contacts that were removed
+        $toDelete = array_diff($existingIds, $incomingIds);
+        $user->familyMembers()->whereIn('id', $toDelete)->delete();
+
+        // Create or update contacts
+        foreach ($families as $family) {
+            if (isset($family['id'])) {
+                $user->familyMembers()->where('id', $family['id'])->update([
+                    'name' => $family['name'],
+                    'nric' => $family['nric'],
+                    'gender' => $family['gender'],
+                    'dob' => $family['dob'],
+                    'mobile_phone' => $family['mobile_phone'],
+                    'relation' => $family['relation'],
+                    'martial_status' => $family['martial_status'],
+                    'activity' => $family['activity'],
+                    'organization' => $family['organization'],
+                ]);
+            } else {
+                $user->familyMembers()->create([
+                    'name' => $family['name'],
+                    'nric' => $family['nric'],
+                    'gender' => $family['gender'],
+                    'dob' => $family['dob'],
+                    'mobile_phone' => $family['mobile_phone'],
+                    'relation' => $family['relation'],
+                    'martial_status' => $family['martial_status'],
+                    'activity' => $family['activity'],
+                    'organization' => $family['organization'],
+                ]);
+            }
+        }
+    }
+
+    private function manageChildren(User $user, array $children)
+    {
+        $existingIds = $user->children()->pluck('id')->toArray();
+        $incomingIds = collect($children)->pluck('id')->filter()->toArray();
+
+        // Delete contacts that were removed
+        $toDelete = array_diff($existingIds, $incomingIds);
+        $user->children()->whereIn('id', $toDelete)->delete();
+
+        // Create or update contacts
+        foreach ($children as $child) {
+            if (isset($child['id'])) {
+                $user->children()->where('id', $child['id'])->update([
+                    'name' => $child['name'],
+                    'nric' => $child['nric'],
+                    'gender' => $child['gender'],
+                    'dob' => $child['dob'],
+                    'martial_status' => $child['martial_status'],
+                    'activity' => $child['activity'],
+                ]);
+            } else {
+                $user->children()->create([
+                    'name' => $child['name'],
+                    'nric' => $child['nric'],
+                    'gender' => $child['gender'],
+                    'dob' => $child['dob'],
+                    'martial_status' => $child['martial_status'],
+                    'activity' => $child['activity'],
+                ]);
+            }
+        }
+    }
+
 }

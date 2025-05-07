@@ -34,7 +34,7 @@ class UserResource extends JsonResource
             'spouse_name' => $this->spouse_name,
             'spouse_nric' => $this->spouse_nric,
             'spouse_job' => $this->spouse_job,
-            'spouse_employer' => $this->spouse_employer,
+            'spouse_mobile_phone' => $this->spouse_mobile_phone,
             'is_active' => $this->is_active,
             
             // Relationships

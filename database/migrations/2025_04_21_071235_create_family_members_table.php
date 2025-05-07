@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('nric', 12)->nullable();
             $table->string('gender')->nullable();
             $table->date('dob')->nullable();
-            $table->string('phone_number')->nullable();
+            $table->string('mobile_phone')->nullable();
             $table->string('relation')->nullable();
             $table->enum('marital_status', ['single', 'married', 'divorced'])->nullable();
             $table->string('activity')->nullable();

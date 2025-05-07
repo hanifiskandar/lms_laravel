@@ -39,7 +39,7 @@ class UserSeeder extends Seeder
                 'spouse_name' => $faker->optional(0.5)->name,
                 'spouse_nric' => $faker->optional(0.5)->numerify('96##########'),
                 'spouse_job' => $faker->optional(0.5)->jobTitle,
-                'spouse_employer' => $faker->optional(0.5)->company,
+                'spouse_mobile_phone' => $faker->numerify('01#########'),
                 'is_active' => 1
             ];
 

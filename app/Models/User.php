@@ -40,7 +40,7 @@ class User extends Authenticatable
         'spouse_name',
         'spouse_nric',
         'spouse_job',
-        'spouse_employer',
+        'spouse_mobile_phone',
         'is_active',
     ];
 

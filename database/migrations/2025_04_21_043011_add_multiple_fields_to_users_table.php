@@ -31,8 +31,8 @@ return new class extends Migration
             $table->string('spouse_name')->nullable()->after('end_date');
             $table->string('spouse_nric')->nullable()->after('spouse_name');
             $table->string('spouse_job')->nullable()->after('spouse_nric');
-            $table->string('spouse_employer')->nullable()->after('spouse_job');
-            $table->boolean('is_active')->default(true)->after('spouse_employer');
+            $table->string('spouse_mobile_phone')->nullable()->after('spouse_job');
+            $table->boolean('is_active')->default(true)->after('spouse_mobile_phone');
         });
     }
 
@@ -63,7 +63,7 @@ return new class extends Migration
                 'spouse_name',
                 'spouse_nric',
                 'spouse_job',
-                'spouse_employer',
+                'spouse_mobile_phone',
                 'is_active',
             ]);
         });
