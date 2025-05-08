@@ -20,6 +20,9 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         // Validate input
+
+        \Log::debug($request->all());
+        \Log::debug('test login data');
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
@@ -65,9 +68,21 @@ class AuthController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+    // public function logout(Request $request)
+    // {
+    //     \Log::debug('test logout');
+    //     Auth::logout();
+
+    //     // Invalidate session and regenerate CSRF token
+    //     $request->session()->invalidate();
+    //     $request->session()->regenerateToken();
+
+    //     return response()->json(['message' => 'Logged out successfully']);
+    // }
+
     public function logout(Request $request)
     {
-        Auth::logout();
+        \Log::debug('test logout');
 
         // Invalidate session and regenerate CSRF token
         $request->session()->invalidate();
@@ -75,6 +90,7 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Logged out successfully']);
     }
+
 
     /**
      * Get the authenticated user.
@@ -84,6 +100,7 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
+                \Log::debug('test login user data');
         return response()->json($request->user());
     }
 }
