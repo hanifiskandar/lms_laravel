@@ -9,23 +9,27 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
-class AuthController extends Controller
+class AuthController2 extends Controller
 {
     /**
      * Handle user login.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request)
     {
-        // Validate the request input (make sure username and password are present)
+        // Validate input
+
+        \Log::debug($request->all());
+        \Log::debug('test login data');
         $request->validate([
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'username' => 'required|string',
+            'password' => 'required|string',
         ]);
 
-        // Generate a unique key to track login attempts per user/IP for rate limiting
+        // Rate limit login attempts (mimics Fortify's throttling)
         $throttleKey = 'login:' . $request->username . '|' . $request->ip();
-
-        // If there have been too many failed attempts, reject login
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             throw ValidationException::withMessages([
@@ -33,10 +37,9 @@ class AuthController extends Controller
             ]);
         }
 
-        // Try to find the user by username
+        // Attempt authentication
         $user = User::where('username', $request->username)->first();
 
-        // If user not found or password doesn't match, increment rate limit and fail
         if (!$user || !Hash::check($request->password, $user->password)) {
             RateLimiter::increment($throttleKey);
             throw ValidationException::withMessages([
@@ -44,16 +47,15 @@ class AuthController extends Controller
             ]);
         }
 
-        // Login success: clear any rate limiter attempts for this key
+        // Clear rate limiter on successful login
         RateLimiter::clear($throttleKey);
 
-        // Log the user in using Laravel's session-based auth
+        // Log in the user
         Auth::login($user);
 
-        // Regenerate the session to prevent session fixation attacks
+        // Regenerate session to prevent session fixation
         $request->session()->regenerate();
 
-        // Return a success response along with user data
         return response()->json([
             'message' => 'Login successful',
             'user' => $user,
@@ -62,26 +64,43 @@ class AuthController extends Controller
 
     /**
      * Handle user logout.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
+    // public function logout(Request $request)
+    // {
+    //     \Log::debug('test logout');
+    //     Auth::logout();
+
+    //     // Invalidate session and regenerate CSRF token
+    //     $request->session()->invalidate();
+    //     $request->session()->regenerateToken();
+
+    //     return response()->json(['message' => 'Logged out successfully']);
+    // }
+
     public function logout(Request $request)
     {
-        // Log out the user from the current session
-        Auth::guard('web')->logout();
+        \Log::debug('test logout');
 
-        // Invalidate the session and regenerate the CSRF token
+        // Invalidate session and regenerate CSRF token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Return a success response
         return response()->json(['message' => 'Logged out successfully']);
     }
 
+
     /**
-     * Get the currently authenticated user.
+     * Get the authenticated user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function user(Request $request)
     {
-        // Return the authenticated user (requires auth:sanctum middleware)
+                \Log::debug('test login user data');
         return response()->json($request->user());
     }
 }
