@@ -16,6 +16,8 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        \Log::debug('Login');
+        \Log::debug($request->all());
         // Validate the request input (make sure username and password are present)
         $request->validate([
             'username' => ['required', 'string'],
@@ -65,6 +67,8 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        \Log::debug('Logout');
+        \Log::debug($request->all());
         // Log out the user from the current session
         Auth::guard('web')->logout();
 
@@ -81,6 +85,8 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
+        \Log::debug('Fetch user auth');
+        \Log::debug($request->all());
         // Return the authenticated user (requires auth:sanctum middleware)
         return response()->json($request->user());
     }

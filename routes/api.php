@@ -14,11 +14,11 @@ Route::get('/user', function (Request $request) {
 
 
 //employee
-// Route::get('users', [UserController::class, 'index']);
-// Route::get('users/{id}', [UserController::class, 'show']);  
-// Route::post('users', [UserController::class, 'store']);
-// Route::patch('users/{id}', [UserController::class, 'update']);
-// Route::delete('users/{id}', [UserController::class, 'destroy']);
+Route::get('users', [UserController::class, 'index']);
+Route::get('users/{id}', [UserController::class, 'show']);  
+Route::post('users', [UserController::class, 'store']);
+Route::patch('users/{id}', [UserController::class, 'update']);
+Route::delete('users/{id}', [UserController::class, 'destroy']);
 
 Route::get('/setting/departments', [DepartmentController::class, 'index']);
 Route::get('/setting/designations', [DesignationController::class, 'index']);
@@ -35,9 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::put('/employees/{id}', [UserController::class, 'update']);
     // Route::get('/departments', [DepartmentController::class, 'index']);
 
-    Route::get('users', [UserController::class, 'index']);
-    Route::get('users/{id}', [UserController::class, 'show']);  
-    Route::post('users', [UserController::class, 'store']);
-    Route::patch('users/{id}', [UserController::class, 'update']);
-    Route::delete('users/{id}', [UserController::class, 'destroy']);
+    // Route::get('users', [UserController::class, 'index']);
+    // Route::get('users/{id}', [UserController::class, 'show']);  
+    // Route::post('users', [UserController::class, 'store']);
+    // Route::patch('users/{id}', [UserController::class, 'update']);
+    // Route::delete('users/{id}', [UserController::class, 'destroy']);
 });
