@@ -21,7 +21,7 @@ class ChildrenResource extends JsonResource
             'nric' => $this->nric,
             'gender' => $this->gender,
             'dob' => $this->dob,
-            'marital_status' => $this->marital_status,
+            'martial_status' => $this->martial_status,
             'activity' => $this->activity,
             'user' => new UserResource($this->whenLoaded('user')),
         ];

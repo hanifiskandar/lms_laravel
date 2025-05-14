@@ -10,7 +10,7 @@ class EmergencyContact extends Model
         'user_id',
         'name',
         'relation',
-        'phone_number',
+        'mobile_phone',
     ];
 
     public function user()

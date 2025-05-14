@@ -14,7 +14,7 @@ class Children extends Model
         'nric',
         'gender',
         'dob',
-        'marital_status',
+        'martial_status',
         'activity',
     ];
 

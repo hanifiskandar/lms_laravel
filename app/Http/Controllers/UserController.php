@@ -6,11 +6,11 @@ use App\Models\User;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 // use App\Exports\UsersExport;
 // use Barryvdh\DomPDF\Facade\Pdf;
 // use Maatwebsite\Excel\Facades\Excel;
-
 
 class UserController extends Controller
 {
@@ -45,38 +45,52 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-        public function store(Request $request)
-        {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'nric' => 'required|string|min:12',
-                'mobile_phone' => 'required',
-                'email' => 'required|string|email|max:255|unique:users',
-                'start_date' => 'required',
-                'martial_status' => 'required',
-                'designation_id' => 'required',
-                'department_id' => 'required',
-                'username' => 'required|string|min:12',
-                'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
-                'is_active' => 'nullable|boolean',
-            ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'nric' => 'required|string|min:12',
+            'mobile_phone' => 'required',
+            'email' => 'required|string|email|max:255|unique:users',
+            'start_date' => 'required',
+            'martial_status' => 'required',
+            'designation_id' => 'required',
+            'department_id' => 'required',
+            'username' => 'required|string|min:12',
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        try {
+            DB::beginTransaction();
 
             $user = User::create([
                 ...$validated,
                 'password' => Hash::make($validated['password']),
-                'is_active' => isset($validated['is_active']) ? $validated['is_active'] : false,
+                'is_active' => $validated['is_active'] ?? false,
             ]);
+
+            DB::commit();
 
             $user->load(['designation', 'department']);
 
             return new UserResource($user);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Failed to create user.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
+    }
 
     /**
      * Display the specified resource.
      */
     public function show($id)
     {
+        \Log::debug('show sini');
         $user = User::with('designation', 'department', 'emergencyContacts','familyMembers','children')->findOrFail($id);
         return new UserResource($user);
     }
@@ -84,96 +98,109 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
+
     public function update(Request $request, $id)
     {
-
+        \Log::debug('update');
+        \Log::debug($request->all());
         $user = User::findOrFail($id);
 
-        if($request->filled('page') && $request->page === 'Personal'){
-            
-            $validated = $request->validate([
-                'address_line1' => 'required',
-                'address_line2' => 'nullable|string',
-                'address_line3' => 'nullable|string',
-                'city' => 'required',
-                'state' => 'required',
-                'postcode' => 'required',
-                'office_phone' => 'nullable|string',
-                'mobile_phone' => 'required',
-                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            ]);
+        $validated = [];
+        $validatedContacts = [];
+        $validatedFamily = [];
 
-            $validatedContacts = $request->validate([
-                'emergency_contacts' => 'required|array|min:1',
-                'emergency_contacts.*.id' => 'nullable|integer|exists:emergency_contacts,id',
-                'emergency_contacts.*.name' => 'required|string',
-                'emergency_contacts.*.relation' => 'required|string',
-                'emergency_contacts.*.mobile_phone' => 'required|string',
-            ]);
-        }
-        else if($request->filled('page') && $request->page === 'Personal')
-        {
-            $validated = $request->validate([
-                'spouse_name' => 'nullable|string',
-                'spouse_nric' => 'nullable|string',
-                'spouse_job' => 'nullable|string',
-                'spouse_mobile_phone' => 'nullable|string',
-            ]);
+        DB::beginTransaction();
 
-            $validatedFamily = $request->validate([
-                'family_members' => 'required|array|min:1',
-                'family_members.*.id' => 'nullable|integer|exists:family_members,id',
-                'family_members.*.name' => 'required|string',
-                'family_members.*.nric' => 'required|string',
-                'family_members.*.gender' => 'required|string',
-                'family_members.*.dob' => 'nullable|date',
-                'family_members.*.mobile_phone' => 'required|string',
-                'family_members.*.relation' => 'required|string',
-                'family_members.*.martial_status' => 'required|string',
-                'family_members.*.activity' => 'required|string',
-                'family_members.*.organization' => 'nullable|string',
-            ]);
-        }
-        else
-        {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'nric' => 'required|string|min:12',
-                'mobile_phone' => 'required',
-                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-                'start_date' => 'required',
-                'end_date' => 'sometimes',
-                'martial_status' => 'required',
-                'designation_id' => 'required',
-                'department_id' => 'required',
-                'password' => ['sometimes', 'confirmed', Password::min(8)->letters()->numbers()],
-                'is_active' => 'nullable|boolean',
-            ]);
+        try {
+            if ($request->filled('page') && $request->page === 'Personal') {
+                $validated = $request->validate([
+                    'address_line1' => 'required',
+                    'address_line2' => 'nullable|string',
+                    'address_line3' => 'nullable|string',
+                    'city' => 'required',
+                    'state' => 'required',
+                    'postcode' => 'required',
+                    'office_phone' => 'nullable|string',
+                    'mobile_phone' => 'required',
+                    'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+                ]);
 
-            if (isset($validated['password'])) {
-                $validated['password'] = Hash::make($validated['password']);
+                $validatedContacts = $request->validate([
+                    'emergency_contacts' => 'required|array|min:1',
+                    'emergency_contacts.*.id' => 'nullable|integer|exists:emergency_contacts,id',
+                    'emergency_contacts.*.name' => 'required|string',
+                    'emergency_contacts.*.relation' => 'required|string',
+                    'emergency_contacts.*.mobile_phone' => 'required|string',
+                ]);
+            } elseif ($request->filled('page') && $request->page === 'Family') {
+                $validated = $request->validate([
+                    'spouse_name' => 'nullable|string',
+                    'spouse_nric' => 'nullable|string',
+                    'spouse_job' => 'nullable|string',
+                    'spouse_mobile_phone' => 'nullable|string',
+                ]);
+
+                $validatedFamily = $request->validate([
+                    'family_members' => 'required|array|min:1',
+                    'family_members.*.id' => 'nullable|integer|exists:family_members,id',
+                    'family_members.*.name' => 'required|string',
+                    'family_members.*.nric' => 'required|string',
+                    'family_members.*.gender' => 'required|string',
+                    'family_members.*.dob' => 'nullable|date',
+                    'family_members.*.mobile_phone' => 'required|string',
+                    'family_members.*.relation' => 'required|string',
+                    'family_members.*.martial_status' => 'required|string',
+                    'family_members.*.activity' => 'required|string',
+                    'family_members.*.organization' => 'nullable|string',
+                ]);
+            } else {
+                $validated = $request->validate([
+                    'name' => 'required|string|max:255',
+                    'nric' => 'required|string|min:12',
+                    'mobile_phone' => 'required',
+                    'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+                    'start_date' => 'required',
+                    'end_date' => 'sometimes',
+                    'martial_status' => 'required',
+                    'designation_id' => 'required',
+                    'department_id' => 'required',
+                    'password' => ['sometimes', 'confirmed', Password::min(8)->letters()->numbers()],
+                    'is_active' => 'nullable|boolean',
+                ]);
+
+                if (isset($validated['password'])) {
+                    $validated['password'] = Hash::make($validated['password']);
+                }
             }
 
+            // Update main user fields
+            $user->update($validated);
+
+            // Handle related entities
+            if (!empty($validatedContacts)) {
+                $this->manageEmergencyContacts($user, $validatedContacts['emergency_contacts']);
+            }
+
+            if (!empty($validatedFamily)) {
+                $this->manageFamilyMembers($user, $validatedFamily['family_members']);
+            }
+
+            if ($request->has('children')) {
+                $this->manageChildren($user, $request->children);
+            }
+
+            DB::commit();
+
+            $user->load(['designation', 'department', 'emergencyContacts', 'familyMembers', 'children']);
+
+            return new UserResource($user);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Update failed.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $user->update($validated);
-
-        if ($request->has('emergency_contacts')) {
-            $this->manageEmergencyContacts($user, $validatedContacts['emergency_contacts']);
-        }
-
-        if ($request->has('family_members')) {
-            $this->manageFamilyMembers($user, $validatedFamily['family_members']);
-        }
-
-        if ($request->has('children')) {
-            $this->manageChildren($user, $request->children);
-        }
-
-
-        $user->load(['designation', 'department', 'emergencyContacts','familyMembers','children']);
-
-        return new UserResource($user);
     }
 
     /**

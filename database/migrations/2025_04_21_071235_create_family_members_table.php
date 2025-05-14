@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('dob')->nullable();
             $table->string('mobile_phone')->nullable();
             $table->string('relation')->nullable();
-            $table->enum('marital_status', ['single', 'married', 'divorced'])->nullable();
+            $table->enum('martial_status', ['single', 'married', 'divorced'])->nullable();
             $table->string('activity')->nullable();
             $table->string('organization')->nullable();
             $table->timestamps();

@@ -21,9 +21,9 @@ class FamilyMemberResource extends JsonResource
             'nric' => $this->nric,
             'gender' => $this->gender,
             'dob' => $this->dob,
-            'phone_number' => $this->phone_number,
+            'mobile_phone' => $this->mobile_phone,
             'relation' => $this->relation,
-            'marital_status' => $this->marital_status,
+            'martial_status' => $this->martial_status,
             'activity' => $this->activity,
             'organization' => $this->organization,
             'user' => new UserResource($this->whenLoaded('user')), // Eager load the user data

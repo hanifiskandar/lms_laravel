@@ -12,9 +12,9 @@ class FamilyMember extends Model
         'nric',
         'gender',
         'dob',
-        'phone_number',
+        'mobile_phone',
         'relation',
-        'marital_status',
+        'martial_status',
         'activity',
         'organization',
     ];

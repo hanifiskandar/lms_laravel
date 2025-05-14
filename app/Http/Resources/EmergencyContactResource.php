@@ -19,7 +19,7 @@ class EmergencyContactResource extends JsonResource
             'user_id' => $this->user_id,
             'name' => $this->name,
             'relation' => $this->relation,
-            'phone_number' => $this->phone_number,
+            'mobile_phone' => $this->mobile_phone,
             'user' => new UserResource($this->whenLoaded('user')),
         ];
     }
