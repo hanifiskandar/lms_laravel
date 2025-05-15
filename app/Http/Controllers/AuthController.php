@@ -85,8 +85,6 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        \Log::debug('Fetch user auth');
-        \Log::debug($request->all());
         // Return the authenticated user (requires auth:sanctum middleware)
         return response()->json($request->user());
     }

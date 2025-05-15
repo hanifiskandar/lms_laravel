@@ -19,7 +19,7 @@ return new class extends Migration
             $table->date('end_date');
             $table->enum('duration', ['full_day', 'half_day'])->default('full_day');
             $table->text('reason')->nullable();
-            $table->string('status')->nullable();
+            $table->string('status')->default('1');
             $table->string('file_original_name')->nullable();
             $table->string('file_path')->nullable();
             $table->integer('file_size')->nullable();

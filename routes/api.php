@@ -32,13 +32,13 @@ Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum')
 Route::middleware('auth:sanctum')->group(function () {
 
     // Route User
-    Route::get('users', [UserController::class, 'index']);
-    Route::get('users/{id}', [UserController::class, 'show']);  
-    Route::post('users', [UserController::class, 'store']);
-    Route::patch('users/{id}', [UserController::class, 'update']);
-    Route::delete('users/{id}', [UserController::class, 'destroy']);
+    // Route::get('users', [UserController::class, 'index']);
+    // Route::get('users/{id}', [UserController::class, 'show']);  
+    // Route::post('users', [UserController::class, 'store']);
+    // Route::patch('users/{id}', [UserController::class, 'update']);
+    // Route::delete('users/{id}', [UserController::class, 'destroy']);
 
-    // Route::apiResource('users', UserController::class);
+    Route::apiResource('users', UserController::class);
     Route::apiResource('leave-requests', LeaveController::class);
 
     //Route Leave Request

@@ -44,13 +44,15 @@ class LeaveController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::debug($request->all());
+
         $validated = $request->validate([
-            'type' => 'required',
+            'leave_type_id' => 'required',
             'duration' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string',
-            'attachment' => 'sometimes|file|max:10240', // max 10MB
+            // 'attachment' => 'sometimes|file|max:10240', // max 10MB
         ]);
 
         try {
@@ -64,11 +66,13 @@ class LeaveController extends Controller
                 'user_id' => auth()->id(), // assuming user is logged in
             ]);
 
+            \Log::debug('it is here');
+
             DB::commit();
 
             $leaveRequest->load(['user', 'leaveType']);
 
-            return new LeaveRequest($leaveRequest);
+            return new LeaveRequestResource($leaveRequest);
         } catch (\Throwable $e) {
             DB::rollBack();
 
