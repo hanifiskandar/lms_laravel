@@ -11,32 +11,40 @@ use Illuminate\Support\Facades\Hash;
 
 class LeaveController extends Controller
 {
+
+    protected $userId;
+
+    public function __construct()
+    {
+        $this->userId = auth()->id();
+    }
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-
+        \Log::debug('index leave');
+        \Log::debug($request->all());
         $leaveRequestQuery = LeaveRequest::with('user', 'leaveType')
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->input('search');
-                $query->where(function ($query2) use ($search) {
-                    $query2->where('name', 'like', "%{$search}%")
-                        ->orWhere('nric', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
+            ->when($request->filled('leave_type'), function ($query) use ($request) {
+                $query->where('leave_type_id', $request->input('leave_type'));
             })
-            ->when($request->filled('designation'), function ($query) use ($request) {
-                $query->where('designation_id', $request->input('designation'));
+            ->when($request->filled('duration'), function ($query) use ($request) {
+                $query->where('duration', $request->input('duration'));
             })
-            ->when($request->filled('department'), function ($query) use ($request) {
-                $query->where('department_id', $request->input('department'));
-            });
+            ->when($request->filled('start_date'), function ($query) use ($request) {
+                $query->where('start_date', $request->input('start_date'));
+            })
+            ->when($request->filled('end_date'), function ($query) use ($request) {
+                $query->where('end_date', $request->input('end_date'));
+            })
+            ->where('user_id',$this->userId);
+
 
         $perPage = $request->input('per_page', 10);
         $leaveRequests = $leaveRequestQuery->paginate($perPage);
 
-        return LeaveRequest::collection($leaveRequests);
+        return LeaveRequestResource::collection($leaveRequests);
     }
 
     /**
@@ -52,7 +60,7 @@ class LeaveController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string',
-            // 'attachment' => 'sometimes|file|max:10240', // max 10MB
+            'attachment' => 'sometimes|file|max:10240', // max 10MB
         ]);
 
         try {
@@ -63,10 +71,8 @@ class LeaveController extends Controller
             $leaveRequest = LeaveRequest::create([
                 ...$validated,
                 ...$fileData,
-                'user_id' => auth()->id(), // assuming user is logged in
+                'user_id' => $this->userId, // assuming user is logged in
             ]);
-
-            \Log::debug('it is here');
 
             DB::commit();
 

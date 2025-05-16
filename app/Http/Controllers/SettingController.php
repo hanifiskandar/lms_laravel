@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\State;
+use App\Models\LeaveType;
 
 class SettingController extends Controller
 {
@@ -22,25 +23,16 @@ class SettingController extends Controller
 
     }
 
-    // public function organization()
-    // {
-    //     try {
-            
-    //         $organizations = Organization::orderBy('id')->get(); 
+    public function leaveTypes()
+    {
 
-    //         if ($organizations->isNotEmpty()) {
-    //             return $this->jsonResponse(
-    //                 OrganizationResource::collection($organizations),
-    //                 'Data fetched successfully.'
-    //             );
-    //         }
+        $leaveTypes = LeaveType::orderBy('id')->get(); 
 
-    //         return $this->jsonResponse([], 'No Data found.');
-            
-    //     } catch (\Exception $e) {
-            
-    //         \Log::error('Error fetching data.', ['error_message' => $e->getMessage()]);
-    //         return $this->jsonResponse(null, 'Failed to fetch data.', 'error', 500);
-    //     }
-    // }
+        if ($leaveTypes->isNotEmpty()) {
+            return response()->json([
+                'data' => $leaveTypes
+            ]);
+        }
+
+    }
 }

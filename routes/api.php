@@ -20,6 +20,7 @@ Route::prefix('setting')->group(function () {
     Route::get('/departments', [DepartmentController::class, 'index']);
     Route::get('/designations', [DesignationController::class, 'index']);
     Route::get('/states', [SettingController::class, 'states']);
+    Route::get('/leave-types', [SettingController::class, 'leaveTypes']);
 });
 
 // Authentication

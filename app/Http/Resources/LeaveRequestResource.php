@@ -21,8 +21,12 @@ class LeaveRequestResource extends JsonResource
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'duration' => $this->duration,
+            'duration_label' => $this->duration === 'full_day' ? 'Full Day' : 'Half Day',
             'reason' => $this->reason,
-            'status' => $this->status,
+            'status' => [
+                'id' => $this->status,
+                'label' => $this->status_label,
+            ],
             'file_original_name' => $this->file_original_name,
             'file_path' => $this->file_path,
             'file_size' => $this->file_size,

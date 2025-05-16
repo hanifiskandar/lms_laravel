@@ -22,6 +22,23 @@ class LeaveRequest extends Model
     ];
 
 
+    protected $statusLabels = [
+        1 => 'Pending',
+        2 => 'Approved',
+        3 => 'Rejected',
+    ];
+
+    /**
+     * Get the status label for the user.
+     *
+     * @return string
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->statusLabels[$this->status] ?? '-';
+    }
+
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id','id');
