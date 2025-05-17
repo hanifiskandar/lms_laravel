@@ -2,21 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\LeaveBalanceResource;
 use App\Models\LeaveRequest;
+use App\Models\Leavebalance;
 use App\Http\Resources\LeaveRequestResource;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class LeaveController extends Controller
 {
 
     protected $userId;
+    protected $currentYear;
 
     public function __construct()
     {
         $this->userId = auth()->id();
+        $this->currentYear = now()->year;
     }
     /**
      * Display a listing of the resource.
@@ -60,8 +65,14 @@ class LeaveController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string',
-            'attachment' => 'sometimes|file|max:10240', // max 10MB
+            'attachment' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:5120', // max 10MB
         ]);
+
+        if (!$this->checkLeaveBalance($request)) {
+            return response()->json([
+                'message' => 'Your leave balance is not enough.',
+            ], 422);
+        }
 
         try {
             DB::beginTransaction();
@@ -88,25 +99,12 @@ class LeaveController extends Controller
             ], 500);
         }
     }
-    /**
-     * Display the specified resource.
-     */
+
     public function show($id)
     {
         $leaveRequest = LeaveRequest::with('user', 'leaveType')->findOrFail($id);
         return new LeaveRequestResource($leaveRequest);
     }
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    // public function destroy($id)
-    // {   
-    //     $user = User::findOrFail($id);
-    //     $user->delete();
-    //     return response()->json(null, 204);
-    // }
 
     private function handleFileUpload(Request $request): array
     {
@@ -122,6 +120,33 @@ class LeaveController extends Controller
             'file_path' => $path,
             'file_size' => $file->getSize(),
         ];
+    }
+
+    private function checkLeaveBalance(Request $request): bool
+    {
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
+        $duration = $request->input('duration');
+        $leaveTypeId = $request->input('leave_type_id');
+    
+        $daysDiff = $startDate->diffInDays($endDate) + 1;
+        $requestedDays = $duration === 'half_day' ? $daysDiff * 0.5 : $daysDiff;
+    
+        $leaveBalance = LeaveBalance::where('user_id', $this->userId)
+            ->where('leave_type_id', $leaveTypeId)
+            ->where('year', $this->currentYear)
+            ->first();
+    
+        return $leaveBalance && $leaveBalance->balance_days >= $requestedDays;
+    }
+
+    public function leaveBalance(){
+
+        $leaveBalance = LeaveBalance::where('user_id', $this->userId)
+                        ->where('year',  $this->currentYear)
+                        ->get();
+
+        return LeaveBalanceResource::collection($leaveBalance);
     }
 
 

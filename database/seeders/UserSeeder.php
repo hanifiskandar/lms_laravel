@@ -18,9 +18,9 @@ class UserSeeder extends Seeder
         for ($i = 0; $i < $userCount; $i++) {
 
             $userData =  [
-                'name' => $faker->name,
-                'email' => $faker->unique()->safeEmail,
-                'username' => $faker->unique()->userName, 
+                'name' => $i == 0 ? 'Mr. Admin' : $faker->name,
+                'email' => $i == 0 ? 'admin@example.com' : $faker->unique()->safeEmail,
+                'username' => $i == 0 ? 'admin' : $faker->unique()->userName,
                 'password' => Hash::make('password'),
                 'nric' => $faker->numerify('96##########'),
                 'dob' => $faker->dateTimeBetween('-60 years', '-18 years')->format('Y-m-d'),

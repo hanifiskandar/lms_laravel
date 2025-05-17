@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             LeaveTypeSeeder::class,
             UserSeeder::class,
             LeaveLimitSeeder::class,            
+            LeaveBalanceSeeder::class,            
         ]);
     }
 }
