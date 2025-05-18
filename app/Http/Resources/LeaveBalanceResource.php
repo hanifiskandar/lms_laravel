@@ -19,7 +19,11 @@ class LeaveBalanceResource extends JsonResource
             'user_id' => $this->user_id,
             'leave_type_id' => $this->leave_type_id,
             'year' => $this->year,
-            'balance_days' => $this->balance_days,
+            'entitlement' => $this->entitlement,
+            'eligible' => $this->eligible,
+            'carry_forward' => $this->carry_forward,
+            'used' => $this->used,
+            'balance' => $this->balance,
             'user' => new UserResource($this->whenLoaded('user')), // Eager load user data
             'leave_type' => new LeaveTypeResource($this->whenLoaded('leaveType')), // Eager load leave type data
         ];

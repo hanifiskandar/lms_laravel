@@ -62,7 +62,11 @@ class LeaveBalanceSeeder extends Seeder
                     'user_id' => $user->id,
                     'leave_type_id' => $leaveType->id,
                     'year' => $currentYear,
-                    'balance_days' => $limitDays,
+                    'entitlement' => $limitDays,
+                    'eligible' => $limitDays,
+                    'carry_forward' => 0,
+                    'used' => 0,
+                    'balance' => $limitDays,
                 ]);
             }
         }

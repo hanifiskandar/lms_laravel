@@ -16,7 +16,11 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('leave_type_id')->constrained()->onDelete('cascade');
             $table->year('year');
-            $table->integer('balance_days');
+            $table->integer('entitlement');
+            $table->integer('eligible');
+            $table->integer('carry_forward');
+            $table->integer('used');
+            $table->integer('balance');
             $table->timestamps();
         });
     }

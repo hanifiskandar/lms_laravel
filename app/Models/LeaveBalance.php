@@ -10,7 +10,11 @@ class LeaveBalance extends Model
         'user_id',
         'leave_type_id',
         'year',
-        'balance_days',
+        'entitlement',
+        'eligible',
+        'carry_forward',
+        'used',
+        'balance',
     ];
 
     public function user()

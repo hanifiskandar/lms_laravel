@@ -7,6 +7,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveController;
 
 // Route::get('/user', function (Request $request) {
@@ -41,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('users', UserController::class);
     Route::apiResource('leave-requests', LeaveController::class);
+    Route::get('/leave/balances', [LeaveBalanceController::class,'index']);
 
     //Route Leave Request
     // Route::post('leave-request', [LeaveRequest::class, 'store']);
