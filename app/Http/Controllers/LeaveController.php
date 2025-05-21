@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\LeaveBalanceResource;
 use App\Models\LeaveRequest;
-use App\Models\Leavebalance;
+use App\Models\LeaveBalance;
 use App\Http\Resources\LeaveRequestResource;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class LeaveController extends Controller
@@ -28,8 +29,8 @@ class LeaveController extends Controller
      */
     public function index(Request $request)
     {
-        \Log::debug('index leave');
-        \Log::debug($request->all());
+        Log::debug('index leave');
+        Log::debug($request->all());
         $leaveRequestQuery = LeaveRequest::with('user', 'leaveType')
             ->when($request->filled('leave_type'), function ($query) use ($request) {
                 $query->where('leave_type_id', $request->input('leave_type'));
@@ -57,7 +58,7 @@ class LeaveController extends Controller
      */
     public function store(Request $request)
     {
-        \Log::debug($request->all());
+        Log::debug($request->all());
 
         $validated = $request->validate([
             'leave_type_id' => 'required',
@@ -82,7 +83,7 @@ class LeaveController extends Controller
             $leaveRequest = LeaveRequest::create([
                 ...$validated,
                 ...$fileData,
-                'user_id' => $this->userId, // assuming user is logged in
+                'user_id' => $this->userId,
             ]);
 
             DB::commit();
@@ -128,25 +129,28 @@ class LeaveController extends Controller
         $endDate = Carbon::parse($request->input('end_date'));
         $duration = $request->input('duration');
         $leaveTypeId = $request->input('leave_type_id');
-    
-        $daysDiff = $startDate->diffInDays($endDate) + 1;
+
+        // Count only weekdays (Monday to Friday)
+        $daysDiff = $startDate->diffInDaysFiltered(function (Carbon $date) {
+            return !$date->isWeekend(); // Skip Saturday and Sunday
+        }, $endDate);
+
+        // Include the start date if it's a weekday
+        if (!$startDate->isWeekend()) {
+            $daysDiff++;
+        }
+
+        // Calculate requested days
         $requestedDays = $duration === 'half_day' ? $daysDiff * 0.5 : $daysDiff;
-    
+
         $leaveBalance = LeaveBalance::where('user_id', $this->userId)
             ->where('leave_type_id', $leaveTypeId)
             ->where('year', $this->currentYear)
             ->first();
-    
-        return $leaveBalance && $leaveBalance->balance_days >= $requestedDays;
-    }
 
-    public function leaveBalance(){
+        Log::debug("Requested days: " . $requestedDays);
 
-        $leaveBalance = LeaveBalance::where('user_id', $this->userId)
-                        ->where('year',  $this->currentYear)
-                        ->get();
-
-        return LeaveBalanceResource::collection($leaveBalance);
+        return $leaveBalance && $leaveBalance->balance >= $requestedDays;
     }
 
 

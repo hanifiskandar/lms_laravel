@@ -18,10 +18,11 @@ use App\Http\Controllers\LeaveController;
 //employee
 
 Route::prefix('setting')->group(function () {
-    Route::get('/departments', [DepartmentController::class, 'index']);
+    Route::get('/departments', [SettingController::class, 'departments']);
     Route::get('/designations', [DesignationController::class, 'index']);
     Route::get('/states', [SettingController::class, 'states']);
     Route::get('/leave-types', [SettingController::class, 'leaveTypes']);
+    Route::get('/users', [SettingController::class, 'users']);
 });
 
 // Authentication
@@ -33,19 +34,12 @@ Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum')
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Route User
-    // Route::get('users', [UserController::class, 'index']);
-    // Route::get('users/{id}', [UserController::class, 'show']);  
-    // Route::post('users', [UserController::class, 'store']);
-    // Route::patch('users/{id}', [UserController::class, 'update']);
-    // Route::delete('users/{id}', [UserController::class, 'destroy']);
-
     Route::apiResource('users', UserController::class);
     Route::apiResource('leave-requests', LeaveController::class);
-    Route::get('/leave/balances', [LeaveBalanceController::class,'index']);
-
-    //Route Leave Request
-    // Route::post('leave-request', [LeaveRequest::class, 'store']);
-    // Route::post('leave-request/{id}', [LeaveRequest::class, 'show']);
+    Route::apiResource('departments', DepartmentController::class)->only(['index', 'show', 'update']);
+    Route::prefix('leave')->group(function () {
+        Route::get('balances', [LeaveBalanceController::class,'index']);
+        Route::apiResource('requests', LeaveController::class)->only(['index', 'show', 'store']);
+    });
 
 });

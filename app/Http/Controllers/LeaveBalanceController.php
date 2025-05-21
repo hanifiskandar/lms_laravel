@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\LeaveBalanceResource;
 use App\Models\LeaveRequest;
-use App\Models\Leavebalance;
+use App\Models\LeaveBalance;
 use App\Http\Resources\LeaveRequestResource;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
@@ -46,7 +46,7 @@ class LeaveBalanceController extends Controller
         }
         
         // Now query with whereIn for leave_type_id
-        $leaveBalances = LeaveBalance::with('leaveType')
+        $leaveBalance = LeaveBalance::with('leaveType')
             ->where('year', $year)
             ->where('user_id', $this->userId)
             ->when(!empty($leaveTypes), function ($query) use ($leaveTypes) {
@@ -54,9 +54,9 @@ class LeaveBalanceController extends Controller
             })
             ->orderBy('leave_type_id', 'asc')  // <-- Add this line
             ->get();
-        \Log::debug($leaveBalances);
+        \Log::debug($leaveBalance);
 
-        return LeaveBalanceResource::collection($leaveBalances);
+        return LeaveBalanceResource::collection($leaveBalance);
     }
 
 }

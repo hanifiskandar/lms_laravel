@@ -17,6 +17,8 @@ class DepartmentResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'head_id' => $this->head_id,
+            'head_department' => new UserResource($this->whenLoaded('headDepartment')),
         ];
     }
 }
