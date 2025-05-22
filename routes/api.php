@@ -29,17 +29,26 @@ Route::prefix('setting')->group(function () {
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
-// Route::get('users/{id}', [UserController::class, 'show'])->middleware('auth:sanctum');
-
 
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('users', UserController::class);
+    Route::get('users/export/pdf',[UserController::class,'exportPDF']);
+    Route::get('users/export/excel',[UserController::class,'exportExcel']);
     Route::apiResource('leave-requests', LeaveController::class);
     Route::apiResource('departments', DepartmentController::class)->only(['index', 'show', 'update']);
     Route::prefix('leave')->group(function () {
         Route::get('balances', [LeaveBalanceController::class,'index']);
         Route::apiResource('requests', LeaveController::class)->only(['index', 'show', 'store']);
+        
+        Route::prefix('approval')->group(function () {
+                Route::get('requests', [LeaveController::class,'leaveApprovalRequests']);
+                Route::patch('approve', [LeaveController::class,'approve']);
+                Route::patch('reject', [LeaveController::class,'reject']);
+        });
+
+        Route::get('export/pdf',[LeaveController::class,'exportPDF']);
+        Route::get('export/excel',[LeaveController::class,'exportExcel']);
     });
 
 });

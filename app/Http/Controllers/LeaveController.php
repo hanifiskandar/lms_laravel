@@ -12,16 +12,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Exports\LeaveRequestsExport;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LeaveController extends Controller
 {
 
+    protected $user;
     protected $userId;
+    protected $departmentId;
     protected $currentYear;
+
 
     public function __construct()
     {
         $this->userId = auth()->id();
+        $this->user = auth()->user();
+        $this->departmentId = $this->user->department_id;
         $this->currentYear = now()->year;
     }
     /**
@@ -31,6 +39,7 @@ class LeaveController extends Controller
     {
         Log::debug('index leave');
         Log::debug($request->all());
+
         $leaveRequestQuery = LeaveRequest::with('user', 'leaveType')
             ->when($request->filled('leave_type'), function ($query) use ($request) {
                 $query->where('leave_type_id', $request->input('leave_type'));
@@ -39,10 +48,10 @@ class LeaveController extends Controller
                 $query->where('duration', $request->input('duration'));
             })
             ->when($request->filled('start_date'), function ($query) use ($request) {
-                $query->where('start_date', $request->input('start_date'));
+                $query->whereDate('start_date', '>=', $request->input('start_date'));
             })
             ->when($request->filled('end_date'), function ($query) use ($request) {
-                $query->where('end_date', $request->input('end_date'));
+                $query->whereDate('end_date', '<=', $request->input('end_date'));
             })
             ->where('user_id',$this->userId);
 
@@ -152,6 +161,100 @@ class LeaveController extends Controller
 
         return $leaveBalance && $leaveBalance->balance >= $requestedDays;
     }
+
+    public function leaveApprovalRequests(Request $request)
+    {
+        Log::debug('index approval leave');
+        Log::debug($request->all());
+
+        $leaveApprovalRequestQuery = LeaveRequest::with('user', 'leaveType')
+            ->when($request->filled('leave_type'), function ($query) use ($request) {
+                $query->where('leave_type_id', $request->input('leave_type'));
+            })
+            ->when($request->filled('duration'), function ($query) use ($request) {
+                $query->where('duration', $request->input('duration'));
+            })
+            ->when($request->filled('start_date'), function ($query) use ($request) {
+                $query->whereDate('start_date', '>=', $request->input('start_date'));
+            })
+            ->when($request->filled('end_date'), function ($query) use ($request) {
+                $query->whereDate('end_date', '<=', $request->input('end_date'));
+            })
+            ->whereHas('user', function ($query) {
+                $query->where('department_id', $this->departmentId);
+            })
+            ->where('user_id', '!=', $this->userId);
+
+        $perPage = $request->input('per_page', 10);
+        $leaveRequests = $leaveApprovalRequestQuery->paginate($perPage);
+
+        return LeaveRequestResource::collection($leaveRequests);
+    }
+
+    public function approve($id)
+    {
+        $leaveRequest = LeaveRequest::findOrFail($id);
+
+        $leaveRequest->update([
+            'approved_by_id' => auth()->id(),
+            'approved_at' => now(),
+            'status' => 2,
+        ]);
+
+        return response()->json([
+            'message' => 'Leave request approved successfully.',
+            'data' => $leaveRequest,
+        ]);
+    }
+
+    public function reject($id)
+    {
+        $leaveRequest = LeaveRequest::findOrFail($id);
+
+        $leaveRequest->update([
+            'approved_by_id' => auth()->id(),
+            'approved_at' => now(),
+            'status' => 3,
+        ]);
+
+        return response()->json([
+            'message' => 'Leave request rejected successfully.',
+            'data' => $leaveRequest,
+        ]);
+    }
+
+    public function exportPDF(Request $request)
+    {
+        \Log::debug('req pdf');
+        \Log::debug($request->all());
+        $leaveRequests = LeaveRequest::with('user', 'leaveType')
+            ->when($request->filled('leave_type'), function ($query) use ($request) {
+                $query->where('leave_type_id', $request->input('leave_type'));
+            })
+            ->when($request->filled('duration'), function ($query) use ($request) {
+                $query->where('duration', $request->input('duration'));
+            })
+            ->when($request->filled('start_date'), function ($query) use ($request) {
+                $query->whereDate('start_date', '>=', $request->input('start_date'));
+            })
+            ->when($request->filled('end_date'), function ($query) use ($request) {
+                $query->whereDate('end_date', '<=', $request->input('end_date'));
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $pdf = Pdf::loadView('exports.leave-requests', ['leaveRequests' => $leaveRequests])
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('leave-requests.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new LeaveRequestsExport($request), 'leave-requests.xlsx');
+    }
+
+
 
 
 }

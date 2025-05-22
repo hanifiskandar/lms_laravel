@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-// use App\Exports\UsersExport;
-// use Barryvdh\DomPDF\Facade\Pdf;
-// use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\UsersExport;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
@@ -310,6 +310,32 @@ class UserController extends Controller
                 ]);
             }
         }
+    }
+
+    public function exportPDF(Request $request)
+    {
+        \Log::debug('req pdf');
+        \Log::debug($request->all());
+        $users = User::query()
+            ->with(['designation', 'department'])
+            ->when($request->filled('designation'), function ($query) use ($request) {
+                $query->where('designation_id', $request->input('designation'));
+            })
+            ->when($request->filled('department'), function ($query) use ($request) {
+                $query->where('department_id', $request->input('department'));
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $pdf = Pdf::loadView('exports.users', ['users' => $users])
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('users.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new UsersExport($request), 'users.xlsx');
     }
 
 }
